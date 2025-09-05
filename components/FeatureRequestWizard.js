@@ -379,8 +379,37 @@ const FeatureRequestWizard = () => {
     }
   };
 
+  const renderSuccessModal = () => {
+    if (!showSuccessModal) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-gray-800 rounded-lg p-8 max-w-md mx-4 border border-gray-600">
+          <div className="text-center">
+            <div className="mb-4">
+              <div className="mx-auto w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mb-4">
+                <Check className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-white mb-4">Thank you for your submission!</h3>
+            <p className="text-gray-300 mb-6">
+              Our product team will review this and reach out to you.
+            </p>
+            <button
+              onClick={handleModalClose}
+              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
+      {renderSuccessModal()}
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
