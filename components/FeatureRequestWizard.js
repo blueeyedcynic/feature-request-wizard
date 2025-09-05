@@ -306,6 +306,18 @@ const FeatureRequestWizard = () => {
               </div>
               
               <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Company Website</label>
+                <input
+                  type="url"
+                  value={formData.companyWebsite}
+                  onChange={(e) => updateFormData('companyWebsite', e.target.value)}
+                  className={`w-full p-3 bg-gray-700 border ${errors.companyWebsite ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none`}
+                  placeholder="https://yourcompany.com"
+                />
+                {errors.companyWebsite && <p className="text-red-400 text-sm mt-1">{errors.companyWebsite}</p>}
+              </div>
+              
+              <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Job Description</label>
                 <input
                   type="text"
