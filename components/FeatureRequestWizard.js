@@ -1,0 +1,436 @@
+import React, { useState } from 'react';
+import { ChevronRight, ChevronLeft, Check, User, MessageSquare, Target, Search, FileText } from 'lucide-react';
+
+const FeatureRequestWizard = () => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    company: '',
+    jobDescription: '',
+    problem: '',
+    opportunity: '',
+    dynamicQuestions: [],
+    dynamicAnswers: {}
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const totalSteps = 5;
+
+  const steps = [
+    { number: 1, title: 'Who You Are', icon: User },
+    { number: 2, title: 'The Problem', icon: MessageSquare },
+    { number: 3, title: 'The Opportunity', icon: Target },
+    { number: 4, title: 'Deep Dive', icon: Search },
+    { number: 5, title: 'Review', icon: FileText }
+  ];
+
+  const validateStep = (step) => {
+    const newErrors = {};
+    
+    switch(step) {
+      case 1:
+        if (!formData.name.trim()) newErrors.name = 'Name is required';
+        if (!formData.email.trim()) newErrors.email = 'Email is required';
+        if (!formData.company.trim()) newErrors.company = 'Company is required';
+        if (!formData.jobDescription.trim()) newErrors.jobDescription = 'Job description is required';
+        break;
+      case 2:
+        if (!formData.problem.trim()) newErrors.problem = 'Problem description is required';
+        break;
+      case 3:
+        if (!formData.opportunity.trim()) newErrors.opportunity = 'Opportunity description is required';
+        break;
+      case 4:
+        formData.dynamicQuestions.forEach((_, index) => {
+          if (!formData.dynamicAnswers[index]?.trim()) {
+            newErrors[`dynamic_${index}`] = 'This answer is required';
+          }
+        });
+        break;
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const generateDynamicQuestions = async () => {
+    setIsGeneratingQuestions(true);
+    try {
+      const response = await fetch('/api/generate-questions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          company: formData.company,
+          jobDescription: formData.jobDescription,
+          problem: formData.problem,
+          opportunity: formData.opportunity
+        }),
+      });
+
+      const data = await response.json();
+      
+      setFormData(prev => ({
+        ...prev,
+        dynamicQuestions: data.questions || []
+      }));
+      
+      // Auto-advance to step 4 after questions are generated
+      setCurrentStep(4);
+    } catch (error) {
+      console.error('Error generating questions:', error);
+      // Fallback questions
+      setFormData(prev => ({
+        ...prev,
+        dynamicQuestions: [
+          "How many people or processes would be impacted by solving this problem?",
+          "What's the estimated time or cost savings this solution could provide monthly?"
+        ]
+      }));
+      
+      // Auto-advance to step 4 even with fallback questions
+      setCurrentStep(4);
+    }
+    setIsGeneratingQuestions(false);
+  };
+
+  const submitToGoogleSheets = async () => {
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch('/api/submit-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        alert('Feature request submitted successfully!');
+        
+        // Reset form and go back to step 1
+        setFormData({
+          name: '',
+          email: '',
+          company: '',
+          jobDescription: '',
+          problem: '',
+          opportunity: '',
+          dynamicQuestions: [],
+          dynamicAnswers: {}
+        });
+        setCurrentStep(1);
+      } else {
+        throw new Error(result.error || 'Submission failed');
+      }
+    } catch (error) {
+      console.error('Error submitting:', error);
+      alert('Error submitting feature request. Please try again.');
+    }
+    
+    setIsLoading(false);
+  };
+
+  const nextStep = async () => {
+    if (!validateStep(currentStep)) return;
+    
+    if (currentStep === 3) {
+      // Don't advance step here - let generateDynamicQuestions handle it
+      await generateDynamicQuestions();
+      return;
+    }
+    
+    if (currentStep === 5) {
+      await submitToGoogleSheets();
+      return;
+    }
+    
+    setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+  };
+
+  const prevStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+
+  const updateFormData = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const updateDynamicAnswer = (index, value) => {
+    setFormData(prev => ({
+      ...prev,
+      dynamicAnswers: { ...prev.dynamicAnswers, [index]: value }
+    }));
+    if (errors[`dynamic_${index}`]) {
+      setErrors(prev => ({ ...prev, [`dynamic_${index}`]: '' }));
+    }
+  };
+
+  const renderProgressBar = () => (
+    <div className="mb-8">
+      <div className="flex items-center justify-between mb-4">
+        {steps.map((step, index) => {
+          const Icon = step.icon;
+          const isCompleted = currentStep > step.number;
+          const isCurrent = currentStep === step.number;
+          
+          return (
+            <div key={step.number} className="flex items-center">
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+                isCompleted ? 'bg-green-600 border-green-600' :
+                isCurrent ? 'bg-blue-600 border-blue-600' :
+                'bg-gray-700 border-gray-600'
+              }`}>
+                {isCompleted ? (
+                  <Check className="w-5 h-5 text-white" />
+                ) : (
+                  <Icon className={`w-5 h-5 ${isCurrent ? 'text-white' : 'text-gray-400'}`} />
+                )}
+              </div>
+              {index < steps.length - 1 && (
+                <div className={`w-16 h-0.5 mx-2 ${
+                  isCompleted ? 'bg-green-600' : 'bg-gray-600'
+                }`} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div className="text-center">
+        <span className="text-sm text-gray-400">
+          Step {currentStep} of {totalSteps}: {steps[currentStep - 1].title}
+        </span>
+      </div>
+    </div>
+  );
+
+  const renderStep = () => {
+    // Show loading state when generating questions
+    if (isGeneratingQuestions) {
+      return (
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold text-white mb-6">Analyzing your responses...</h2>
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mb-6"></div>
+            <p className="text-lg text-gray-300 mb-2">Thinking about your answers and generating follow-ups...</p>
+            <p className="text-sm text-gray-400">This will just take a moment</p>
+          </div>
+        </div>
+      );
+    }
+
+    switch(currentStep) {
+      case 1:
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-white mb-6">Tell us about yourself</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Name</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => updateFormData('name', e.target.value)}
+                  className={`w-full p-3 bg-gray-700 border ${errors.name ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none`}
+                  placeholder="Your full name"
+                />
+                {errors.name && <p className="text-red-400 text-sm mt-1">{errors.name}</p>}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => updateFormData('email', e.target.value)}
+                  className={`w-full p-3 bg-gray-700 border ${errors.email ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none`}
+                  placeholder="your.email@company.com"
+                />
+                {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Company</label>
+                <input
+                  type="text"
+                  value={formData.company}
+                  onChange={(e) => updateFormData('company', e.target.value)}
+                  className={`w-full p-3 bg-gray-700 border ${errors.company ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none`}
+                  placeholder="Your company name"
+                />
+                {errors.company && <p className="text-red-400 text-sm mt-1">{errors.company}</p>}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Job Description</label>
+                <input
+                  type="text"
+                  value={formData.jobDescription}
+                  onChange={(e) => updateFormData('jobDescription', e.target.value)}
+                  className={`w-full p-3 bg-gray-700 border ${errors.jobDescription ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none`}
+                  placeholder="e.g., Product Manager, Software Engineer, Sales Director"
+                />
+                {errors.jobDescription && <p className="text-red-400 text-sm mt-1">{errors.jobDescription}</p>}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 2:
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-white mb-6">What challenge or problem are you facing?</h2>
+            <div>
+              <textarea
+                value={formData.problem}
+                onChange={(e) => updateFormData('problem', e.target.value)}
+                className={`w-full p-3 bg-gray-700 border ${errors.problem ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none h-32 resize-none`}
+                placeholder="Describe the specific challenge or problem you're encountering. Be as detailed as possible about what's not working or what's causing friction..."
+              />
+              {errors.problem && <p className="text-red-400 text-sm mt-1">{errors.problem}</p>}
+            </div>
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-white mb-6">What opportunity do you see?</h2>
+            <div>
+              <textarea
+                value={formData.opportunity}
+                onChange={(e) => updateFormData('opportunity', e.target.value)}
+                className={`w-full p-3 bg-gray-700 border ${errors.opportunity ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none h-32 resize-none`}
+                placeholder="What would be different if this challenge or problem went away? How would this impact your work, team, or business?"
+              />
+              {errors.opportunity && <p className="text-red-400 text-sm mt-1">{errors.opportunity}</p>}
+            </div>
+          </div>
+        );
+
+      case 4:
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-white mb-6">Let's dig deeper</h2>
+            <p className="text-gray-300 mb-6">Based on your responses, we have some specific questions to better understand the impact:</p>
+            
+            {formData.dynamicQuestions.map((question, index) => (
+              <div key={index}>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  {question}
+                </label>
+                <textarea
+                  value={formData.dynamicAnswers[index] || ''}
+                  onChange={(e) => updateDynamicAnswer(index, e.target.value)}
+                  className={`w-full p-3 bg-gray-700 border ${errors[`dynamic_${index}`] ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none h-24 resize-none`}
+                  placeholder="Please provide as much detail as possible..."
+                />
+                {errors[`dynamic_${index}`] && <p className="text-red-400 text-sm mt-1">{errors[`dynamic_${index}`]}</p>}
+              </div>
+            ))}
+          </div>
+        );
+
+      case 5:
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-white mb-6">Review your submission</h2>
+            
+            <div className="bg-gray-800 rounded-lg p-6 space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">Contact Information</h3>
+                <p className="text-gray-300">{formData.name} ({formData.email})</p>
+                <p className="text-gray-300">{formData.jobDescription} at {formData.company}</p>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">Problem</h3>
+                <p className="text-gray-300">{formData.problem}</p>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">Opportunity</h3>
+                <p className="text-gray-300">{formData.opportunity}</p>
+              </div>
+              
+              {formData.dynamicQuestions.map((question, index) => (
+                <div key={index}>
+                  <h3 className="text-lg font-semibold text-white mb-2">{question}</h3>
+                  <p className="text-gray-300">{formData.dynamicAnswers[index]}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-white">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-white mb-2">Feature Request Wizard</h1>
+            <p className="text-gray-400">Help us understand your needs and the business impact</p>
+          </div>
+          
+          {renderProgressBar()}
+          
+          <div className="bg-gray-800 rounded-lg p-8 mb-8">
+            {renderStep()}
+          </div>
+          
+          <div className="flex justify-between">
+            <button
+              onClick={prevStep}
+              disabled={currentStep === 1 || isGeneratingQuestions}
+              className={`flex items-center px-6 py-3 rounded-lg font-medium ${
+                currentStep === 1 || isGeneratingQuestions
+                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                  : 'bg-gray-700 text-white hover:bg-gray-600'
+              }`}
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Previous
+            </button>
+            
+            <button
+              onClick={nextStep}
+              disabled={isLoading || isGeneratingQuestions}
+              className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isGeneratingQuestions ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Generating Questions...
+                </>
+              ) : isLoading && currentStep === totalSteps ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Submitting...
+                </>
+              ) : currentStep === totalSteps ? 'Submit Request' : 'Next'}
+              {currentStep !== totalSteps && !isGeneratingQuestions && !isLoading && <ChevronRight className="w-4 h-4 ml-2" />}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default FeatureRequestWizard;
