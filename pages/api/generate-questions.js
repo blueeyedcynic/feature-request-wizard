@@ -4,10 +4,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { name, company, jobDescription, problem, opportunity } = req.body;
+    const { name, company, companyWebsite, jobDescription, problem, opportunity } = req.body;
 
     console.log('API Key exists:', !!process.env.ANTHROPIC_API_KEY);
-    console.log('API Key prefix:', process.env.ANTHROPIC_API_KEY?.substring(0, 10));
+    console.log('Generating questions for:', company);
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -18,28 +18,43 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
+        max_tokens: 1500,
         messages: [
           {
             role: "user",
-            content: `Based on this user context, generate 1-2 specific follow-up questions to understand the ROI and business impact of their feature request. Focus on quantifying the impact and understanding implementation urgency.
+            content: `You have access to web search capabilities. Use them to research the user's company and industry context before generating follow-up questions.
 
 User Context:
 - Name: ${name}
 - Company: ${company}
+- Company Website: ${companyWebsite}
 - Role: ${jobDescription}
 - Problem: ${problem}
 - Opportunity: ${opportunity}
 
-Please respond with a JSON object containing an array of questions:
+INSTRUCTIONS:
+1. First, use web search to research their company by visiting their website (${companyWebsite}) and searching for company information
+2. Look up industry benchmarks and context related to their specific problem
+3. Research typical ROI metrics for their role and industry
+4. Generate exactly 3 specific, intelligent follow-up questions that demonstrate you understand their business context
+
+Your questions should:
+- Show knowledge of their company/industry
+- Focus on quantifiable business impact (revenue, cost savings, efficiency gains)
+- Be relevant to their specific role and decision-making authority
+- Help determine realistic ROI and implementation priority
+- Reference industry standards or benchmarks when possible
+
+Please respond with a JSON object containing exactly 3 questions:
 {
   "questions": [
-    "Question 1 text here",
-    "Question 2 text here"
+    "Question 1 that shows company/industry knowledge",
+    "Question 2 that focuses on quantifiable metrics", 
+    "Question 3 that assesses implementation scope and urgency"
   ]
 }
 
-Make the questions specific to their industry, role, and the problem they described. Focus on metrics like time saved, revenue impact, cost reduction, or user satisfaction improvements.
+Make each question substantive and demonstrate that you've researched their context. Avoid generic questions.
 
 DO NOT OUTPUT ANYTHING OTHER THAN VALID JSON.`
           }
@@ -67,11 +82,12 @@ DO NOT OUTPUT ANYTHING OTHER THAN VALID JSON.`
   } catch (error) {
     console.error('Error generating questions:', error);
     
-    // Fallback questions
+    // Enhanced fallback questions
     res.status(200).json({
       questions: [
-        "How many people or processes would be impacted by solving this problem?",
-        "What's the estimated time or cost savings this solution could provide monthly?"
+        "How many people or processes in your organization would be directly impacted by solving this problem?",
+        "What's the estimated monthly cost (time, resources, or revenue loss) this problem currently creates for your business?",
+        "If this solution delivered a 20-30% improvement, what would be the measurable business impact and timeline for implementation?"
       ]
     });
   }

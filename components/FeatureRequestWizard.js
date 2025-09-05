@@ -385,6 +385,7 @@ const FeatureRequestWizard = () => {
                 <h3 className="text-lg font-semibold text-white mb-2">Contact Information</h3>
                 <p className="text-gray-300">{formData.name} ({formData.email})</p>
                 <p className="text-gray-300">{formData.jobDescription} at {formData.company}</p>
+                <p className="text-gray-300">Website: {formData.companyWebsite}</p>
               </div>
               
               <div>

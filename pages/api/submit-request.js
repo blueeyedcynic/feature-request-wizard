@@ -49,7 +49,7 @@ export default async function handler(req, res) {
     // Check if sheet has headers, if not, add them
     const headerResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.GOOGLE_SHEET_ID,
-      range: 'A1:I1',
+      range: 'A1:J1',
     });
 
     if (!headerResponse.data.values || headerResponse.data.values.length === 0) {
@@ -59,6 +59,7 @@ export default async function handler(req, res) {
         'Name',
         'Email',
         'Company',
+        'Company Website',
         'Job Description',
         'Problem',
         'Opportunity',
@@ -68,7 +69,7 @@ export default async function handler(req, res) {
 
       await sheets.spreadsheets.values.update({
         spreadsheetId: process.env.GOOGLE_SHEET_ID,
-        range: 'A1:I1',
+        range: 'A1:J1',
         valueInputOption: 'RAW',
         requestBody: {
           values: [headers],
@@ -79,7 +80,7 @@ export default async function handler(req, res) {
     // Append the new row
     await sheets.spreadsheets.values.append({
       spreadsheetId: process.env.GOOGLE_SHEET_ID,
-      range: 'A:I',
+      range: 'A:J',
       valueInputOption: 'RAW',
       insertDataOption: 'INSERT_ROWS',
       requestBody: {
