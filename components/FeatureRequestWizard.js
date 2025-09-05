@@ -322,7 +322,7 @@ const FeatureRequestWizard = () => {
       case 4:
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white mb-6">Let's dig deeper</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">Let&apos;s dig deeper</h2>
             <p className="text-gray-300 mb-6">Based on your responses, we have some specific questions to better understand the impact:</p>
             
             {formData.dynamicQuestions.map((question, index) => (
