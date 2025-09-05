@@ -6,6 +6,9 @@ export default async function handler(req, res) {
   try {
     const { name, company, jobDescription, problem, opportunity } = req.body;
 
+    console.log('API Key exists:', !!process.env.ANTHROPIC_API_KEY);
+    console.log('API Key prefix:', process.env.ANTHROPIC_API_KEY?.substring(0, 10));
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -44,8 +47,12 @@ DO NOT OUTPUT ANYTHING OTHER THAN VALID JSON.`
       })
     });
 
+    console.log('Anthropic response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`Anthropic API error: ${response.status}`);
+      const errorText = await response.text();
+      console.log('Anthropic error response:', errorText);
+      throw new Error(`Anthropic API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
