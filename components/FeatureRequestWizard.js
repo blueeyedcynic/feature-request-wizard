@@ -16,6 +16,7 @@ const FeatureRequestWizard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const totalSteps = 5;
 
@@ -114,20 +115,7 @@ const FeatureRequestWizard = () => {
       const result = await response.json();
       
       if (response.ok) {
-        alert('Feature request submitted successfully!');
-        
-        // Reset form and go back to step 1
-        setFormData({
-          name: '',
-          email: '',
-          company: '',
-          jobDescription: '',
-          problem: '',
-          opportunity: '',
-          dynamicQuestions: [],
-          dynamicAnswers: {}
-        });
-        setCurrentStep(1);
+        setShowSuccessModal(true);
       } else {
         throw new Error(result.error || 'Submission failed');
       }
@@ -137,6 +125,23 @@ const FeatureRequestWizard = () => {
     }
     
     setIsLoading(false);
+  };
+
+  const handleModalClose = () => {
+    setShowSuccessModal(false);
+    
+    // Reset form and go back to step 1
+    setFormData({
+      name: '',
+      email: '',
+      company: '',
+      jobDescription: '',
+      problem: '',
+      opportunity: '',
+      dynamicQuestions: [],
+      dynamicAnswers: {}
+    });
+    setCurrentStep(1);
   };
 
   const nextStep = async () => {
@@ -214,6 +219,34 @@ const FeatureRequestWizard = () => {
       </div>
     </div>
   );
+
+  const renderSuccessModal = () => {
+    if (!showSuccessModal) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-gray-800 rounded-lg p-8 max-w-md mx-4 border border-gray-600">
+          <div className="text-center">
+            <div className="mb-4">
+              <div className="mx-auto w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mb-4">
+                <Check className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-white mb-4">Thank you for your submission!</h3>
+            <p className="text-gray-300 mb-6">
+              Our product team will review this and reach out to you.
+            </p>
+            <button
+              onClick={handleModalClose}
+              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderStep = () => {
     // Show loading state when generating questions
@@ -377,34 +410,6 @@ const FeatureRequestWizard = () => {
       default:
         return null;
     }
-  };
-
-  const renderSuccessModal = () => {
-    if (!showSuccessModal) return null;
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-gray-800 rounded-lg p-8 max-w-md mx-4 border border-gray-600">
-          <div className="text-center">
-            <div className="mb-4">
-              <div className="mx-auto w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mb-4">
-                <Check className="w-8 h-8 text-white" />
-              </div>
-            </div>
-            <h3 className="text-xl font-bold text-white mb-4">Thank you for your submission!</h3>
-            <p className="text-gray-300 mb-6">
-              Our product team will review this and reach out to you.
-            </p>
-            <button
-              onClick={handleModalClose}
-              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    );
   };
 
   return (
