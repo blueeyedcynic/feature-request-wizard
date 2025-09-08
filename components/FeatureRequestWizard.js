@@ -7,6 +7,7 @@ const FeatureRequestWizard = () => {
     name: '',
     email: '',
     company: '',
+    companyWebsite: '',
     jobDescription: '',
     problem: '',
     opportunity: '',
@@ -81,11 +82,9 @@ const FeatureRequestWizard = () => {
         dynamicQuestions: data.questions || []
       }));
       
-      // Auto-advance to step 4 after questions are generated
       setCurrentStep(4);
     } catch (error) {
       console.error('Error generating questions:', error);
-      // Fallback questions
       setFormData(prev => ({
         ...prev,
         dynamicQuestions: [
@@ -94,7 +93,6 @@ const FeatureRequestWizard = () => {
         ]
       }));
       
-      // Auto-advance to step 4 even with fallback questions
       setCurrentStep(4);
     }
     setIsGeneratingQuestions(false);
@@ -130,11 +128,11 @@ const FeatureRequestWizard = () => {
   const handleModalClose = () => {
     setShowSuccessModal(false);
     
-    // Reset form and go back to step 1
     setFormData({
       name: '',
       email: '',
       company: '',
+      companyWebsite: '',
       jobDescription: '',
       problem: '',
       opportunity: '',
@@ -148,7 +146,6 @@ const FeatureRequestWizard = () => {
     if (!validateStep(currentStep)) return;
     
     if (currentStep === 3) {
-      // Don't advance step here - let generateDynamicQuestions handle it
       await generateDynamicQuestions();
       return;
     }
@@ -183,8 +180,8 @@ const FeatureRequestWizard = () => {
   };
 
   const renderProgressBar = () => (
-    <div className="mb-8">
-      <div className="flex items-center justify-between mb-4">
+    <div className="mb-6 sm:mb-8">
+      <div className="hidden sm:flex items-center justify-between mb-4">
         {steps.map((step, index) => {
           const Icon = step.icon;
           const isCompleted = currentStep > step.number;
@@ -212,6 +209,21 @@ const FeatureRequestWizard = () => {
           );
         })}
       </div>
+      
+      <div className="sm:hidden mb-4">
+        <div className="flex items-center justify-center mb-3">
+          <div className={`flex items-center justify-center w-12 h-12 rounded-full border-2 bg-blue-600 border-blue-600`}>
+            {React.createElement(steps[currentStep - 1].icon, { className: "w-6 h-6 text-white" })}
+          </div>
+        </div>
+        <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+          <div 
+            className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+            style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+          ></div>
+        </div>
+      </div>
+      
       <div className="text-center">
         <span className="text-sm text-gray-400">
           Step {currentStep} of {totalSteps}: {steps[currentStep - 1].title}
@@ -224,8 +236,8 @@ const FeatureRequestWizard = () => {
     if (!showSuccessModal) return null;
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-gray-800 rounded-lg p-8 max-w-md mx-4 border border-gray-600">
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-gray-800 rounded-lg p-6 sm:p-8 max-w-md w-full mx-4 border border-gray-600">
           <div className="text-center">
             <div className="mb-4">
               <div className="mx-auto w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mb-4">
@@ -249,15 +261,14 @@ const FeatureRequestWizard = () => {
   };
 
   const renderStep = () => {
-    // Show loading state when generating questions
     if (isGeneratingQuestions) {
       return (
         <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-white mb-6">Analyzing your responses...</h2>
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mb-6"></div>
-            <p className="text-lg text-gray-300 mb-2">Thinking about your answers and generating follow-ups...</p>
-            <p className="text-sm text-gray-400">This will just take a moment</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-6">Analyzing your responses...</h2>
+          <div className="flex flex-col items-center justify-center py-12 sm:py-16">
+            <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-b-2 border-blue-500 mb-6"></div>
+            <p className="text-base sm:text-lg text-gray-300 mb-2 text-center px-4">Thinking about your answers and generating follow-ups...</p>
+            <p className="text-sm text-gray-400 text-center">This will just take a moment</p>
           </div>
         </div>
       );
@@ -266,8 +277,8 @@ const FeatureRequestWizard = () => {
     switch(currentStep) {
       case 1:
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white mb-6">Tell us about yourself</h2>
+          <div className="space-y-4 sm:space-y-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Tell us about yourself</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Name</label>
@@ -275,7 +286,7 @@ const FeatureRequestWizard = () => {
                   type="text"
                   value={formData.name}
                   onChange={(e) => updateFormData('name', e.target.value)}
-                  className={`w-full p-3 bg-gray-700 border ${errors.name ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none`}
+                  className={`w-full p-3 bg-gray-700 border ${errors.name ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none text-base`}
                   placeholder="Your full name"
                 />
                 {errors.name && <p className="text-red-400 text-sm mt-1">{errors.name}</p>}
@@ -287,7 +298,7 @@ const FeatureRequestWizard = () => {
                   type="email"
                   value={formData.email}
                   onChange={(e) => updateFormData('email', e.target.value)}
-                  className={`w-full p-3 bg-gray-700 border ${errors.email ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none`}
+                  className={`w-full p-3 bg-gray-700 border ${errors.email ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none text-base`}
                   placeholder="your.email@company.com"
                 />
                 {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
@@ -299,7 +310,7 @@ const FeatureRequestWizard = () => {
                   type="text"
                   value={formData.company}
                   onChange={(e) => updateFormData('company', e.target.value)}
-                  className={`w-full p-3 bg-gray-700 border ${errors.company ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none`}
+                  className={`w-full p-3 bg-gray-700 border ${errors.company ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none text-base`}
                   placeholder="Your company name"
                 />
                 {errors.company && <p className="text-red-400 text-sm mt-1">{errors.company}</p>}
@@ -309,9 +320,9 @@ const FeatureRequestWizard = () => {
                 <label className="block text-sm font-medium text-gray-300 mb-2">Company Website</label>
                 <input
                   type="url"
-                  value={formData.companyWebsite}
+                  value={formData.companyWebsite || ''}
                   onChange={(e) => updateFormData('companyWebsite', e.target.value)}
-                  className={`w-full p-3 bg-gray-700 border ${errors.companyWebsite ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none`}
+                  className={`w-full p-3 bg-gray-700 border ${errors.companyWebsite ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none text-base`}
                   placeholder="https://yourcompany.com"
                 />
                 {errors.companyWebsite && <p className="text-red-400 text-sm mt-1">{errors.companyWebsite}</p>}
@@ -323,7 +334,7 @@ const FeatureRequestWizard = () => {
                   type="text"
                   value={formData.jobDescription}
                   onChange={(e) => updateFormData('jobDescription', e.target.value)}
-                  className={`w-full p-3 bg-gray-700 border ${errors.jobDescription ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none`}
+                  className={`w-full p-3 bg-gray-700 border ${errors.jobDescription ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none text-base`}
                   placeholder="e.g., Product Manager, Software Engineer, Sales Director"
                 />
                 {errors.jobDescription && <p className="text-red-400 text-sm mt-1">{errors.jobDescription}</p>}
@@ -334,13 +345,13 @@ const FeatureRequestWizard = () => {
 
       case 2:
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white mb-6">What challenge or problem are you facing?</h2>
+          <div className="space-y-4 sm:space-y-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">What challenge or problem are you facing?</h2>
             <div>
               <textarea
                 value={formData.problem}
                 onChange={(e) => updateFormData('problem', e.target.value)}
-                className={`w-full p-3 bg-gray-700 border ${errors.problem ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none h-32 resize-none`}
+                className={`w-full p-3 bg-gray-700 border ${errors.problem ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none h-32 sm:h-32 resize-none text-base`}
                 placeholder="Describe the specific challenge or problem you're encountering. Be as detailed as possible about what's not working or what's causing friction..."
               />
               {errors.problem && <p className="text-red-400 text-sm mt-1">{errors.problem}</p>}
@@ -350,13 +361,13 @@ const FeatureRequestWizard = () => {
 
       case 3:
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white mb-6">What opportunity do you see?</h2>
+          <div className="space-y-4 sm:space-y-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">What opportunity do you see?</h2>
             <div>
               <textarea
                 value={formData.opportunity}
                 onChange={(e) => updateFormData('opportunity', e.target.value)}
-                className={`w-full p-3 bg-gray-700 border ${errors.opportunity ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none h-32 resize-none`}
+                className={`w-full p-3 bg-gray-700 border ${errors.opportunity ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none h-32 sm:h-32 resize-none text-base`}
                 placeholder="What would be different if this challenge or problem went away? How would this impact your work, team, or business?"
               />
               {errors.opportunity && <p className="text-red-400 text-sm mt-1">{errors.opportunity}</p>}
@@ -366,9 +377,9 @@ const FeatureRequestWizard = () => {
 
       case 4:
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white mb-6">Let&apos;s dig deeper</h2>
-            <p className="text-gray-300 mb-6">Based on your responses, we have some specific questions to better understand the impact:</p>
+          <div className="space-y-4 sm:space-y-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Let's dig deeper</h2>
+            <p className="text-gray-300 mb-4 sm:mb-6">Based on your responses, we have some specific questions to better understand the impact:</p>
             
             {formData.dynamicQuestions.map((question, index) => (
               <div key={index}>
@@ -378,7 +389,7 @@ const FeatureRequestWizard = () => {
                 <textarea
                   value={formData.dynamicAnswers[index] || ''}
                   onChange={(e) => updateDynamicAnswer(index, e.target.value)}
-                  className={`w-full p-3 bg-gray-700 border ${errors[`dynamic_${index}`] ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none h-24 resize-none`}
+                  className={`w-full p-3 bg-gray-700 border ${errors[`dynamic_${index}`] ? 'border-red-500' : 'border-gray-600'} rounded-lg text-white focus:border-blue-500 focus:outline-none h-24 resize-none text-base`}
                   placeholder="Please provide as much detail as possible..."
                 />
                 {errors[`dynamic_${index}`] && <p className="text-red-400 text-sm mt-1">{errors[`dynamic_${index}`]}</p>}
@@ -389,31 +400,33 @@ const FeatureRequestWizard = () => {
 
       case 5:
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white mb-6">Review your submission</h2>
+          <div className="space-y-4 sm:space-y-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Review your submission</h2>
             
-            <div className="bg-gray-800 rounded-lg p-6 space-y-4">
+            <div className="bg-gray-800 rounded-lg p-4 sm:p-6 space-y-4">
               <div>
                 <h3 className="text-lg font-semibold text-white mb-2">Contact Information</h3>
-                <p className="text-gray-300">{formData.name} ({formData.email})</p>
-                <p className="text-gray-300">{formData.jobDescription} at {formData.company}</p>
-                <p className="text-gray-300">Website: {formData.companyWebsite}</p>
+                <div className="text-sm sm:text-base text-gray-300 space-y-1">
+                  <p>{formData.name} ({formData.email})</p>
+                  <p>{formData.jobDescription} at {formData.company}</p>
+                  {formData.companyWebsite && <p>Website: {formData.companyWebsite}</p>}
+                </div>
               </div>
               
               <div>
                 <h3 className="text-lg font-semibold text-white mb-2">Problem</h3>
-                <p className="text-gray-300">{formData.problem}</p>
+                <p className="text-sm sm:text-base text-gray-300 leading-relaxed">{formData.problem}</p>
               </div>
               
               <div>
                 <h3 className="text-lg font-semibold text-white mb-2">Opportunity</h3>
-                <p className="text-gray-300">{formData.opportunity}</p>
+                <p className="text-sm sm:text-base text-gray-300 leading-relaxed">{formData.opportunity}</p>
               </div>
               
               {formData.dynamicQuestions.map((question, index) => (
                 <div key={index}>
                   <h3 className="text-lg font-semibold text-white mb-2">{question}</h3>
-                  <p className="text-gray-300">{formData.dynamicAnswers[index]}</p>
+                  <p className="text-sm sm:text-base text-gray-300 leading-relaxed">{formData.dynamicAnswers[index]}</p>
                 </div>
               ))}
             </div>
@@ -428,24 +441,24 @@ const FeatureRequestWizard = () => {
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {renderSuccessModal()}
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Feature Request Wizard</h1>
-            <p className="text-gray-400">Help us understand your needs and the business impact</p>
+          <div className="text-center mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Feature Request Wizard</h1>
+            <p className="text-gray-400 text-sm sm:text-base px-4">Help us understand your needs and the business impact</p>
           </div>
           
           {renderProgressBar()}
           
-          <div className="bg-gray-800 rounded-lg p-8 mb-8">
+          <div className="bg-gray-800 rounded-lg p-4 sm:p-8 mb-6 sm:mb-8">
             {renderStep()}
           </div>
           
-          <div className="flex justify-between">
+          <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0">
             <button
               onClick={prevStep}
               disabled={currentStep === 1 || isGeneratingQuestions}
-              className={`flex items-center px-6 py-3 rounded-lg font-medium ${
+              className={`flex items-center justify-center px-6 py-3 rounded-lg font-medium text-sm sm:text-base ${
                 currentStep === 1 || isGeneratingQuestions
                   ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                   : 'bg-gray-700 text-white hover:bg-gray-600'
@@ -458,12 +471,13 @@ const FeatureRequestWizard = () => {
             <button
               onClick={nextStep}
               disabled={isLoading || isGeneratingQuestions}
-              className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             >
               {isGeneratingQuestions ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Generating Questions...
+                  <span className="hidden sm:inline">Generating Questions...</span>
+                  <span className="sm:hidden">Generating...</span>
                 </>
               ) : isLoading && currentStep === totalSteps ? (
                 <>

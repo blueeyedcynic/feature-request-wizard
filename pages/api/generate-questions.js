@@ -73,8 +73,18 @@ DO NOT OUTPUT ANYTHING OTHER THAN VALID JSON.`
     const data = await response.json();
     let responseText = data.content[0].text;
     
-    // Clean up any markdown formatting
+    console.log('Raw Claude response:', responseText);
+    
+    // Clean up any markdown formatting and extract JSON
     responseText = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    
+    // Try to extract JSON if Claude added extra text
+    let jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      responseText = jsonMatch[0];
+    }
+    
+    console.log('Cleaned response for parsing:', responseText);
     
     const parsedResponse = JSON.parse(responseText);
     
